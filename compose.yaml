@@ -1,0 +1,46 @@
+services:
+
+  caddy:
+    build:
+      context: .
+      dockerfile: ./docker/caddy/Dockerfile
+    hostname: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file:
+      - path: .caddy.env
+        required: true
+    volumes:
+      - caddy_data:/data
+      - caddy_logs:/var/log/caddy/
+
+  nginxdemo:
+    image: nginxdemos/hello:0.4-plain-text
+    hostname: nginxdemo
+    restart: unless-stopped
+
+  pocketid:
+    image: ghcr.io/pocket-id/pocket-id:v2-distroless
+    read_only: true
+    user: '1000:1000'
+    hostname: pocketid
+    restart: unless-stopped
+    env_file:
+      - path: .pocketid.env
+        required: true
+    volumes:
+      - pocketid_data:/app/data
+    healthcheck:
+      test: ["CMD", "/app/pocket-id", "healthcheck"]
+      interval: 1m30s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+
+volumes:
+  caddy_data:
+  caddy_logs:
+  pocketid_data:
